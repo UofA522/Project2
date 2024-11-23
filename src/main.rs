@@ -76,6 +76,10 @@ impl<T:Ord> RBTree<T> {
             root:None
         }
     }
+
+    fn balance(&mut self){
+
+    }
 }
 
 
@@ -121,5 +125,6 @@ fn main() {
     let mut root = RBTree::new();
     root.insert(5);
     root.insert(1);
+    root.insert(6);
     println!("{:#?}",root);
 }
