@@ -40,7 +40,16 @@ impl<T:Ord> TreeNode<T>{
                     }
                 }
             }
-            Ordering::Equal | Ordering::Greater  => {}
+            Ordering::Equal | Ordering::Greater  => {
+                match &self.right {
+                    None => {
+                        self.right = Some(TreeNode::new(key,NodeColor::Red))
+                    }
+                    Some(right) => {
+                        right.borrow_mut().insert_node(key)
+                    }
+                }
+            }
         }
     }
 }
