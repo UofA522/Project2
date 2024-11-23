@@ -8,6 +8,7 @@ enum NodeColor {
 }
 type Tree = Rc<RefCell<TreeNode<u32>>>;
 type RedBlackTree= Option<Tree>;
+#[derive(Debug)]
 struct TreeNode<T> {
     pub color: NodeColor,
     pub key: T,
@@ -17,9 +18,9 @@ struct TreeNode<T> {
 }
 
 impl<T> TreeNode<T>{
-    fn new(key:T)->Self{
+    fn new(key:T,color:NodeColor)->Self{
         TreeNode{
-            color: NodeColor::Black,
+            color,
             key,
             parent: None,
             left: None,
@@ -28,9 +29,9 @@ impl<T> TreeNode<T>{
     }
 }
 
-trait BasicFunction{
-    fn insert(&self);
-    fn delete(&self);
+trait BasicFunction<T>{
+    fn insert(&mut self,key:T);
+    fn delete(&mut self,key:T);
     fn number_of_leaves(&self)->u32;
     fn height_of_tree(&self)->u32;
     fn inorder_traversal(&self);
@@ -38,37 +39,10 @@ trait BasicFunction{
     fn print_tree(&self);
 
 }
-impl<T> BasicFunction for TreeNode<T>{
-    fn insert(&self) {
-        todo!()
-    }
-
-    fn delete(&self) {
-        todo!()
-    }
-
-    fn number_of_leaves(&self) -> u32 {
-        todo!()
-    }
-
-    fn height_of_tree(&self) -> u32 {
-        todo!()
-    }
-
-    fn inorder_traversal(&self) {
-        todo!()
-    }
-
-    fn is_tree_empty(&self) ->bool {
-        todo!()
-    }
-
-    fn print_tree(&self) {
-        todo!()
-    }
-}
 
 
 fn main() {
-    println!("Hello, world!");
+    let mut root = TreeNode::new(5);
+    println!("{:#?}",root);
+    root.insert(1)
 }
