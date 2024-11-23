@@ -15,6 +15,46 @@ struct TreeNode<T> {
     right: RedBlackTree,
 }
 
+trait BasicFunction{
+    fn insert(&self);
+    fn delete(&self);
+    fn number_of_leaves(&self)->u32;
+    fn height_of_tree(&self)->u32;
+    fn inorder_traversal(&self);
+    fn is_tree_empty(&self)->bool;
+    fn print_tree(&self);
+
+}
+impl<T> BasicFunction for TreeNode<T>{
+    fn insert(&self) {
+        todo!()
+    }
+
+    fn delete(&self) {
+        todo!()
+    }
+
+    fn number_of_leaves(&self) -> u32 {
+        todo!()
+    }
+
+    fn height_of_tree(&self) -> u32 {
+        todo!()
+    }
+
+    fn inorder_traversal(&self) {
+        todo!()
+    }
+
+    fn is_tree_empty(&self) ->bool {
+        todo!()
+    }
+
+    fn print_tree(&self) {
+        todo!()
+    }
+}
+
 
 fn main() {
     println!("Hello, world!");
