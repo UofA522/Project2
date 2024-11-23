@@ -4,6 +4,7 @@ use std::rc::Rc;
 enum NodeColor {
     Red,
     Black,
+    None
 }
 type Tree = Rc<RefCell<TreeNode<u32>>>;
 type RedBlackTree= Option<Tree>;
@@ -13,6 +14,18 @@ struct TreeNode<T> {
     pub parent: RedBlackTree,
     left: RedBlackTree,
     right: RedBlackTree,
+}
+
+impl<T> TreeNode<T>{
+    fn new(key:T)->Self{
+        TreeNode{
+            color: NodeColor::Black,
+            key,
+            parent: None,
+            left: None,
+            right: None,
+        }
+    }
 }
 
 trait BasicFunction{
