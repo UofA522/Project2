@@ -40,9 +40,20 @@ trait BasicFunction<T>{
 
 }
 
+#[derive(Debug)]
+struct RBTree{
+    root:RedBlackTree
+}
+
+impl RBTree {
+    fn new()->Self{
+        RBTree{
+            root:None
+        }
+    }
+}
 
 fn main() {
-    let mut root = TreeNode::new(5);
+    let mut root = RBTree::new();
     println!("{:#?}",root);
-    root.insert(1)
 }
