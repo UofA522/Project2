@@ -33,16 +33,21 @@ impl<T: Ord> TreeNode<T> {
         }))
     }
 
-    fn insert_node(&mut self, key: T, parent_rc: &Rc<RefCell<TreeNode<T>>>) {
+    fn insert_node(&mut self, key: T, parent_rc: &Rc<RefCell<TreeNode<T>>>,parent_color:NodeColor) {
         match key.cmp(&self.key) {
             Ordering::Less => {
                 match &self.left {
                     None => {
                         let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent_rc)));
                         self.left = Some(new_node);
+                        if parent_color==NodeColor::Black{
+                            return;
+                        }
                     }
                     Some(left) => {
-                        left.borrow_mut().insert_node(key, left);
+                        let mut left_borrow = left.borrow_mut();
+                        let left_borrow_color = left_borrow.color.clone();
+                        left_borrow.insert_node(key, left,left_borrow_color);
                     }
                 }
             }
@@ -53,7 +58,9 @@ impl<T: Ord> TreeNode<T> {
                         self.right = Some(new_node);
                     }
                     Some(right) => {
-                        right.borrow_mut().insert_node(key, right);
+                        let mut right_borrow = right.borrow_mut();
+                        let right_borrow_color = right_borrow.color.clone();
+                        right_borrow.insert_node(key, right,right_borrow_color);
                     }
                 }
             }
@@ -89,9 +96,12 @@ impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
                 self.root = Some(TreeNode::new(key.clone(), NodeColor::Black, None));
             }
             Some(root_rc) => {
-                root_rc.borrow_mut().insert_node(key, root_rc);
+                let mut root_rc_borrow = root_rc.borrow_mut();
+                let root_rc_color = root_rc_borrow.color.clone();
+                root_rc_borrow.insert_node(key, root_rc,root_rc_color);
             }
         }
+
     }
 
     fn delete(&mut self, key: T) {
@@ -124,5 +134,8 @@ fn main() {
     root.insert(5);
     root.insert(1);
     root.insert(6);
-    println!("{:#?}", root);
+    root.insert(7);
+    root.insert(2);
+    println!("{:#?}",root);
+
 }
