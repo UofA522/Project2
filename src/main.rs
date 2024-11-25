@@ -33,37 +33,56 @@ impl<T: Ord> TreeNode<T> {
         }))
     }
 
-    fn insert_node(&mut self, key: T, parent_rc: &Rc<RefCell<TreeNode<T>>>,parent_color:NodeColor) {
-        match key.cmp(&self.key) {
-            Ordering::Less => {
-                match &self.left {
-                    None => {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent_rc)));
-                        self.left = Some(new_node);
-                        if parent_color==NodeColor::Black{
+    fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) {
+        let child_to_insert = {
+            let mut parent_borrow = parent.borrow_mut();
+
+            match key.cmp(&parent_borrow.key) {
+                Ordering::Less => {
+                    if parent_borrow.left.is_none() {
+                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
+                        parent_borrow.left = Some(new_node);
+                        if parent_borrow.color==NodeColor::Black{
                             return;
                         }
+                        else if parent_borrow.color==NodeColor::Red {
+                            match &parent_borrow.parent {
+                                None => {}
+                                Some(grandparent) => {
+                                   let parent_sibling = grandparent.upgrade().unwrap().borrow().right.clone();
+                                    match parent_sibling {
+                                        None => {
+                                            //perform rotation
+                                        }
+                                        Some(parent_sibling_value) => {
+                                            let parent_sibing_value_borrow = parent_sibling_value.borrow();
+                                            if parent_sibing_value_borrow.color ==NodeColor::Black{
+                                                //perform rotation
+                                            }
+                                            else if parent_sibing_value_borrow.color==NodeColor::Red && grandparent.upgrade().unwrap().borrow().parent.clone().is_none(){
+                                                //recolor
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return; // Exit early after insertion
                     }
-                    Some(left) => {
-                        let mut left_borrow = left.borrow_mut();
-                        let left_borrow_color = left_borrow.color.clone();
-                        left_borrow.insert_node(key, left,left_borrow_color);
+                    parent_borrow.left.clone()
+                }
+                Ordering::Greater | Ordering::Equal => {
+                    if parent_borrow.right.is_none() {
+                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
+                        parent_borrow.right = Some(new_node);
+                        return; // Exit early after insertion
                     }
+                    parent_borrow.right.clone()
                 }
             }
-            Ordering::Equal | Ordering::Greater => {
-                match &self.right {
-                    None => {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent_rc)));
-                        self.right = Some(new_node);
-                    }
-                    Some(right) => {
-                        let mut right_borrow = right.borrow_mut();
-                        let right_borrow_color = right_borrow.color.clone();
-                        right_borrow.insert_node(key, right,right_borrow_color);
-                    }
-                }
-            }
+        };
+        if let Some(child) = child_to_insert {
+            TreeNode::insert_node(&child, key);
         }
     }
 }
@@ -96,12 +115,9 @@ impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
                 self.root = Some(TreeNode::new(key.clone(), NodeColor::Black, None));
             }
             Some(root_rc) => {
-                let mut root_rc_borrow = root_rc.borrow_mut();
-                let root_rc_color = root_rc_borrow.color.clone();
-                root_rc_borrow.insert_node(key, root_rc,root_rc_color);
+                TreeNode::insert_node(root_rc, key)
             }
         }
-
     }
 
     fn delete(&mut self, key: T) {
@@ -131,11 +147,11 @@ impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
 
 fn main() {
     let mut root = RBTree::new();
-    root.insert(5);
-    root.insert(1);
+    root.insert(10);
     root.insert(6);
-    root.insert(7);
-    root.insert(2);
-    println!("{:#?}",root);
-
+    root.insert(5);
+    root.insert(4);
+    root.insert(3);
+    root.insert(1);
+    println!("{:#?}", root);
 }
