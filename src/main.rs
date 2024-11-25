@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 use std::cmp::Ordering;
 use std::rc::{Rc, Weak};
 
@@ -32,6 +32,15 @@ impl<T: Ord> TreeNode<T> {
             right: None,
         }))
     }
+    fn recolor(mut node: RefMut<TreeNode<T>>){
+        if node.color == NodeColor::Red{
+            node.color = NodeColor::Black;
+        }
+        else if node.color==NodeColor::Black {
+            node.color= NodeColor::Red;
+        }
+    }
+
 
     fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) {
         let child_to_insert = {
@@ -52,15 +61,17 @@ impl<T: Ord> TreeNode<T> {
                                    let parent_sibling = grandparent.upgrade().unwrap().borrow().right.clone();
                                     match parent_sibling {
                                         None => {
-                                            //perform rotation
+                                            //perform rotation to convert to line?
                                         }
                                         Some(parent_sibling_value) => {
-                                            let parent_sibing_value_borrow = parent_sibling_value.borrow();
+                                            let parent_sibing_value_borrow = parent_sibling_value.borrow_mut();
                                             if parent_sibing_value_borrow.color ==NodeColor::Black{
                                                 //perform rotation
                                             }
-                                            else if parent_sibing_value_borrow.color==NodeColor::Red && grandparent.upgrade().unwrap().borrow().parent.clone().is_none(){
+                                            else if parent_sibing_value_borrow.color==NodeColor::Red {
                                                 //recolor
+                                                Self::recolor(parent_borrow);
+                                                Self::recolor(parent_sibing_value_borrow);
                                             }
                                         }
                                     }
@@ -148,10 +159,8 @@ impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
 fn main() {
     let mut root = RBTree::new();
     root.insert(10);
-    root.insert(6);
-    root.insert(5);
-    root.insert(4);
-    root.insert(3);
-    root.insert(1);
+    root.insert(8);
+    root.insert(11);
+    root.insert(7);
     println!("{:#?}", root);
 }
