@@ -32,42 +32,13 @@ impl<T: Ord> TreeNode<T> {
             right: None,
         }))
     }
-    fn recolor(mut node: RefMut<TreeNode<T>>){
-        if node.color == NodeColor::Red{
-            node.color = NodeColor::Black;
-        }
-        else if node.color==NodeColor::Black {
-            node.color= NodeColor::Red;
-        }
-    }
 
-
-    fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) {
-        let child_to_insert = {
-            let mut parent_borrow = parent.borrow_mut();
-
-            match key.cmp(&parent_borrow.key) {
-                Ordering::Less => {
-                    if parent_borrow.left.is_none() {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
-                        parent_borrow.left = Some(new_node);
-                        return;
-                    }
-                    parent_borrow.left.clone()
-                }
-                Ordering::Greater | Ordering::Equal => {
-                    if parent_borrow.right.is_none() {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
-                        parent_borrow.right = Some(new_node);
-                        return;
-                    }
-                    parent_borrow.right.clone()
-                }
-            }
+    fn recolor(mut node: RefMut<TreeNode<T>>) {
+        node.color = match node.color {
+            NodeColor::Red => NodeColor::Black,
+            NodeColor::Black => NodeColor::Red,
+            NodeColor::None => NodeColor::None,
         };
-        if let Some(child) = child_to_insert {
-            TreeNode::insert_node(&child, key);
-        }
     }
 }
 
@@ -90,17 +61,53 @@ impl<T: Ord> RBTree<T> {
     fn new() -> Self {
         RBTree { root: None }
     }
+
+    fn insert_fix(&self, new_node: Rc<RefCell<TreeNode<T>>>) {
+        let new_node_borrow = new_node.borrow_mut();
+        while new_node_borrow.parent.clone().is_some() && new_node_borrow.parent.clone().unwrap().upgrade().unwrap().borrow().color == NodeColor::Red {
+
+        }
+    }
+
+    fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) -> Rc<RefCell<TreeNode<T>>> {
+        let child_to_insert = {
+            let mut parent_borrow = parent.borrow_mut();
+
+            match key.cmp(&parent_borrow.key) {
+                Ordering::Less => {
+                    if parent_borrow.left.is_none() {
+                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
+                        parent_borrow.left = Some(new_node.clone());
+                        return new_node;
+                    }
+                    parent_borrow.left.clone().unwrap()
+                }
+                Ordering::Greater | Ordering::Equal => {
+                    if parent_borrow.right.is_none() {
+                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
+                        parent_borrow.right = Some(new_node.clone());
+                        return new_node;
+                    }
+                    parent_borrow.right.clone().unwrap()
+                }
+            }
+        };
+        RBTree::insert_node(&child_to_insert, key)
+    }
 }
 
 impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
     fn insert(&mut self, key: T) {
-        match &self.root {
+        let new_node = match &self.root {
             None => {
-                self.root = Some(TreeNode::new(key.clone(), NodeColor::Black, None));
+                let root = TreeNode::new(key.clone(), NodeColor::Black, None);
+                self.root = Some(root.clone());
+                root
             }
-            Some(root_rc) => {
-                TreeNode::insert_node(root_rc, key)
-            }
+            Some(root_rc) => RBTree::insert_node(root_rc, key),
+        };
+        if let Some(root) = &self.root {
+            self.insert_fix(new_node);
         }
     }
 
