@@ -51,34 +51,7 @@ impl<T: Ord> TreeNode<T> {
                     if parent_borrow.left.is_none() {
                         let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
                         parent_borrow.left = Some(new_node);
-                        if parent_borrow.color==NodeColor::Black{
-                            return;
-                        }
-                        else if parent_borrow.color==NodeColor::Red {
-                            match &parent_borrow.parent {
-                                None => {}
-                                Some(grandparent) => {
-                                   let parent_sibling = grandparent.upgrade().unwrap().borrow().right.clone();
-                                    match parent_sibling {
-                                        None => {
-                                            //perform rotation to convert to line?
-                                        }
-                                        Some(parent_sibling_value) => {
-                                            let parent_sibing_value_borrow = parent_sibling_value.borrow_mut();
-                                            if parent_sibing_value_borrow.color ==NodeColor::Black{
-                                                //perform rotation
-                                            }
-                                            else if parent_sibing_value_borrow.color==NodeColor::Red {
-                                                //recolor
-                                                Self::recolor(parent_borrow);
-                                                Self::recolor(parent_sibing_value_borrow);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        return; // Exit early after insertion
+                        return;
                     }
                     parent_borrow.left.clone()
                 }
@@ -86,7 +59,7 @@ impl<T: Ord> TreeNode<T> {
                     if parent_borrow.right.is_none() {
                         let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
                         parent_borrow.right = Some(new_node);
-                        return; // Exit early after insertion
+                        return;
                     }
                     parent_borrow.right.clone()
                 }
