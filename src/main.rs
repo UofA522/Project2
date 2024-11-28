@@ -63,11 +63,48 @@ impl<T: Ord> RBTree<T> {
     }
 
     fn insert_fix(&self, new_node: Rc<RefCell<TreeNode<T>>>) {
-        let new_node_borrow = new_node.borrow_mut();
-        while new_node_borrow.parent.clone().is_some() && new_node_borrow.parent.clone().unwrap().upgrade().unwrap().borrow().color == NodeColor::Red {
+        let mut current_node = new_node;
+        while let Some(parent) = current_node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
+            if parent.borrow().color != NodeColor::Red {
+                break;
+            }
+            println!("New Node's Parent is red ");
+            let grandparent = parent.borrow().parent.clone().and_then(|gp| gp.upgrade());
+            if let Some(grandparent_node) = grandparent {
+                let parent_is_left_child_of_grandparent = match grandparent_node.borrow().left.as_ref() {
+                    None => {
+                        println!("No Left Child of Grandparent");
+                        false
+                    }
+                    Some(left) => {
+                        println!("Left child of Grandparent exists");
+                        Rc::ptr_eq(&parent, left)
+                    }
+                };
 
+                let uncle = if parent_is_left_child_of_grandparent {
+                    println!("Uncle is Right child");
+                    grandparent_node.borrow().right.clone()
+                } else {
+                    println!("Uncle is left child");
+                    grandparent_node.borrow().left.clone()
+                };
+
+                if let Some(uncle_node) = uncle {
+                    if uncle_node.borrow().color == NodeColor::Red {
+                        println!("Performing Recolor");
+                        TreeNode::recolor(parent.borrow_mut());
+                        TreeNode::recolor(uncle_node.borrow_mut());
+                        TreeNode::recolor(grandparent_node.borrow_mut());
+                        drop(current_node);
+                        current_node = grandparent_node.clone();
+                        continue;
+                    }
+                }
+            }
         }
     }
+
 
     fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) -> Rc<RefCell<TreeNode<T>>> {
         let child_to_insert = {
