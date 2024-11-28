@@ -1,4 +1,4 @@
-use std::cell::{Ref, RefCell, RefMut};
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::rc::{Rc, Weak};
 
@@ -6,7 +6,6 @@ use std::rc::{Rc, Weak};
 enum NodeColor {
     Red,
     Black,
-    None,
 }
 
 type Tree<T> = Rc<RefCell<TreeNode<T>>>;
@@ -22,162 +21,221 @@ struct TreeNode<T> {
     pub right: RedBlackTree<T>,
 }
 
-impl<T: Ord> TreeNode<T> {
-    fn new(key: T, color: NodeColor, parent: Option<WeakTree<T>>) -> Rc<RefCell<TreeNode<T>>> {
+impl<T: Ord + Clone> TreeNode<T> {
+    pub fn new(key: T) -> Tree<T> {
         Rc::new(RefCell::new(TreeNode {
-            color,
+            color: NodeColor::Red,
             key,
-            parent,
+            parent: None,
             left: None,
             right: None,
         }))
     }
-
-    fn recolor(mut node: RefMut<TreeNode<T>>) {
-        node.color = match node.color {
-            NodeColor::Red => NodeColor::Black,
-            NodeColor::Black => NodeColor::Red,
-            NodeColor::None => NodeColor::None,
-        };
-    }
 }
 
-trait BasicFunction<T> {
-    fn insert(&mut self, key: T);
-    fn delete(&mut self, key: T);
-    fn number_of_leaves(&self) -> u32;
-    fn height_of_tree(&self) -> u32;
-    fn inorder_traversal(&self);
-    fn is_tree_empty(&self) -> bool;
-    fn print_tree(&self);
-}
-
-#[derive(Debug)]
-struct RBTree<T> {
+struct RedBlackTreeStructure<T> {
     root: RedBlackTree<T>,
 }
 
-impl<T: Ord> RBTree<T> {
-    fn new() -> Self {
-        RBTree { root: None }
+impl<T: Ord> RedBlackTreeStructure<T> {
+    pub fn new() -> Self {
+        Self { root: None }
     }
 
-    fn insert_fix(&self, new_node: Rc<RefCell<TreeNode<T>>>) {
-        let mut current_node = new_node;
-        while let Some(parent) = current_node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
+    pub fn insert(&mut self, key: T)
+    where
+        T: Clone + Ord,
+    {
+        let new_node = TreeNode::new(key.clone());
+
+        if self.root.is_none() {
+            new_node.borrow_mut().color = NodeColor::Black;
+            self.root = Some(new_node);
+        } else {
+            let mut current = self.root.clone();
+            let mut parent = None;
+
+            while let Some(node) = current {
+                let cmp = key.cmp(&node.borrow().key);
+                parent = Some(node.clone());
+                current = match cmp {
+                    Ordering::Less => node.borrow().left.clone(),
+                    Ordering::Greater => node.borrow().right.clone(),
+                    _ => return,
+                };
+            }
+
+            if let Some(parent_node) = parent {
+                new_node.borrow_mut().parent = Some(Rc::downgrade(&parent_node));
+                if key < parent_node.borrow().key {
+                    parent_node.borrow_mut().left = Some(new_node.clone());
+                } else {
+                    parent_node.borrow_mut().right = Some(new_node.clone());
+                }
+            }
+
+            self.fix_insert(new_node);
+        }
+    }
+
+    fn fix_insert(&mut self, mut node: Tree<T>) {
+        while let Some(parent) = node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
             if parent.borrow().color != NodeColor::Red {
                 break;
             }
-            println!("New Node's Parent is red ");
+
             let grandparent = parent.borrow().parent.clone().and_then(|gp| gp.upgrade());
             if let Some(grandparent_node) = grandparent {
-                let parent_is_left_child_of_grandparent = match grandparent_node.borrow().left.as_ref() {
-                    None => {
-                        println!("No Left Child of Grandparent");
-                        false
-                    }
-                    Some(left) => {
-                        println!("Left child of Grandparent exists");
-                        Rc::ptr_eq(&parent, left)
-                    }
+                let is_left = match grandparent_node.borrow().left.as_ref() {
+                    Some(left) if Rc::ptr_eq(&parent, left) => true,
+                    _ => false,
                 };
 
-                let uncle = if parent_is_left_child_of_grandparent {
-                    println!("Uncle is Right child");
+                let uncle = if is_left {
                     grandparent_node.borrow().right.clone()
                 } else {
-                    println!("Uncle is left child");
                     grandparent_node.borrow().left.clone()
                 };
 
                 if let Some(uncle_node) = uncle {
                     if uncle_node.borrow().color == NodeColor::Red {
-                        println!("Performing Recolor");
-                        TreeNode::recolor(parent.borrow_mut());
-                        TreeNode::recolor(uncle_node.borrow_mut());
-                        TreeNode::recolor(grandparent_node.borrow_mut());
-                        drop(current_node);
-                        current_node = grandparent_node.clone();
+                        // Recolor
+                        parent.borrow_mut().color = NodeColor::Black;
+                        uncle_node.borrow_mut().color = NodeColor::Black;
+                        grandparent_node.borrow_mut().color = NodeColor::Red;
+                        drop(node);
+                        node = grandparent_node.clone();
                         continue;
                     }
                 }
+
+                if is_left {
+                    if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
+                        self.rotate_left(parent.clone());
+                        node = parent.clone();
+                    }
+                    self.rotate_right(grandparent_node.clone());
+                } else {
+                    if parent.borrow().left.as_ref().is_some() && Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap()) {
+                        self.rotate_right(parent.clone());
+                        node = parent.clone();
+                    }
+                    self.rotate_left(grandparent_node.clone());
+                }
+
+                parent.borrow_mut().color = NodeColor::Black;
+                grandparent_node.borrow_mut().color = NodeColor::Red;
             }
         }
-    }
 
-
-    fn insert_node(parent: &Rc<RefCell<TreeNode<T>>>, key: T) -> Rc<RefCell<TreeNode<T>>> {
-        let child_to_insert = {
-            let mut parent_borrow = parent.borrow_mut();
-
-            match key.cmp(&parent_borrow.key) {
-                Ordering::Less => {
-                    if parent_borrow.left.is_none() {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
-                        parent_borrow.left = Some(new_node.clone());
-                        return new_node;
-                    }
-                    parent_borrow.left.clone().unwrap()
-                }
-                Ordering::Greater | Ordering::Equal => {
-                    if parent_borrow.right.is_none() {
-                        let new_node = TreeNode::new(key, NodeColor::Red, Some(Rc::downgrade(parent)));
-                        parent_borrow.right = Some(new_node.clone());
-                        return new_node;
-                    }
-                    parent_borrow.right.clone().unwrap()
-                }
-            }
-        };
-        RBTree::insert_node(&child_to_insert, key)
-    }
-}
-
-impl<T: Ord + Clone + std::fmt::Debug> BasicFunction<T> for RBTree<T> {
-    fn insert(&mut self, key: T) {
-        let new_node = match &self.root {
-            None => {
-                let root = TreeNode::new(key.clone(), NodeColor::Black, None);
-                self.root = Some(root.clone());
-                root
-            }
-            Some(root_rc) => RBTree::insert_node(root_rc, key),
-        };
         if let Some(root) = &self.root {
-            self.insert_fix(new_node);
+            root.borrow_mut().color = NodeColor::Black;
         }
     }
 
-    fn delete(&mut self, key: T) {
-        todo!()
+    fn rotate_left(&mut self, node: Tree<T>) {
+        let right = node.borrow_mut().right.take().unwrap();
+        node.borrow_mut().right = right.borrow_mut().left.take();
+
+        if let Some(left_child) = &node.borrow().right {
+            left_child.borrow_mut().parent = Some(Rc::downgrade(&node));
+        }
+
+        let parent = node.borrow_mut().parent.clone();
+        right.borrow_mut().parent = parent.clone();
+
+        if let Some(parent_node) = parent.and_then(|p| p.upgrade()) {
+            if Rc::ptr_eq(&node, &parent_node.borrow().left.as_ref().unwrap()) {
+                parent_node.borrow_mut().left = Some(right.clone());
+            } else {
+                parent_node.borrow_mut().right = Some(right.clone());
+            }
+        } else {
+            self.root = Some(right.clone());
+        }
+
+        right.borrow_mut().left = Some(node.clone());
+        node.borrow_mut().parent = Some(Rc::downgrade(&right));
     }
 
-    fn number_of_leaves(&self) -> u32 {
-        todo!()
-    }
+    fn rotate_right(&mut self, node: Tree<T>) {
+        let left = node.borrow_mut().left.take().unwrap();
+        node.borrow_mut().left = left.borrow_mut().right.take();
 
-    fn height_of_tree(&self) -> u32 {
-        todo!()
-    }
+        if let Some(right_child) = &node.borrow().left {
+            right_child.borrow_mut().parent = Some(Rc::downgrade(&node));
+        }
 
-    fn inorder_traversal(&self) {
-        todo!()
-    }
+        let parent = node.borrow_mut().parent.clone();
+        left.borrow_mut().parent = parent.clone();
 
-    fn is_tree_empty(&self) -> bool {
-        self.root.is_none()
-    }
+        if let Some(parent_node) = parent.and_then(|p| p.upgrade()) {
+            if Rc::ptr_eq(&node, &parent_node.borrow().left.as_ref().unwrap()) {
+                parent_node.borrow_mut().left = Some(left.clone());
+            } else {
+                parent_node.borrow_mut().right = Some(left.clone());
+            }
+        } else {
+            self.root = Some(left.clone());
+        }
 
-    fn print_tree(&self) {
-        todo!()
+        left.borrow_mut().right = Some(node.clone());
+        node.borrow_mut().parent = Some(Rc::downgrade(&left));
     }
 }
 
 fn main() {
-    let mut root = RBTree::new();
-    root.insert(10);
-    root.insert(8);
-    root.insert(11);
-    root.insert(7);
-    println!("{:#?}", root);
+    let mut rb_tree = RedBlackTreeStructure::new();
+    rb_tree.insert(10);
+    rb_tree.insert(20);
+    rb_tree.insert(30);
+    rb_tree.insert(15);
+    rb_tree.insert(25);
+    rb_tree.insert(5);
+    rb_tree.insert(6);
+    rb_tree.insert(1);
+    rb_tree.insert(5);
+
+    println!("{:#?}", rb_tree.root);
 }
+// fn main() {
+//     let mut rb_tree = RedBlackTreeStructure::new();
+
+//     // Insert nodes
+//     println!("Inserting nodes into the Red-Black Tree:");
+//     rb_tree.insert(10);
+//     rb_tree.insert(20);
+//     rb_tree.insert(30);
+//     rb_tree.insert(15);
+//     rb_tree.insert(25);
+//     rb_tree.insert(5);
+
+//     // Print the tree structure after insertions
+//     println!("\nRed-Black Tree structure after insertions:");
+//     print_tree(&rb_tree.root, 0);
+
+//     // You can add more insertions and additional tests to ensure everything works
+//     rb_tree.insert(12);
+//     rb_tree.insert(18);
+//     rb_tree.insert(8);
+
+//     // Print the tree structure after more insertions
+//     println!("\nRed-Black Tree structure after more insertions:");
+//     print_tree(&rb_tree.root, 0);
+// }
+
+// // Helper function to print the tree in a structured way
+// fn print_tree<T: std::fmt::Debug>(node: &Option<Tree<T>>, level: usize) {
+//     if let Some(n) = node {
+//         // Print current node's key and color
+//         let color = match n.borrow().color {
+//             NodeColor::Red => "Red",
+//             NodeColor::Black => "Black",
+//         };
+//         println!("{:indent$}{}: {:?} (Color: {})", "", n.borrow().key, n.borrow().key, color, indent=level * 4);
+
+//         // Print the left and right children recursively
+//         print_tree(&n.borrow().left, level + 1);
+//         print_tree(&n.borrow().right, level + 1);
+//     }
+// }
