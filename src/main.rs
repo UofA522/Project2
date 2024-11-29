@@ -57,8 +57,6 @@ impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
             let mut parent = None;
 
             while let Some(node) = current {
-                println!("-------------------------------------------------------------");
-                println!("{:#?}",self.root);
                 let cmp = key.cmp(&node.borrow().key);
                 parent = Some(node.clone());
                 current = match cmp {
@@ -197,6 +195,7 @@ fn main() {
     rb_tree.insert(5);
     rb_tree.insert(6);
     rb_tree.insert(1);
+
 
     println!("{:#?}", rb_tree.root);
 }
