@@ -12,6 +12,7 @@ type Tree<T> = Rc<RefCell<TreeNode<T>>>;
 type WeakTree<T> = Weak<RefCell<TreeNode<T>>>;
 type RedBlackTree<T> = Option<Tree<T>>;
 
+
 #[derive(Debug)]
 struct TreeNode<T> {
     pub color: NodeColor,
@@ -32,12 +33,12 @@ impl<T: Ord + Clone> TreeNode<T> {
         }))
     }
 }
-
+#[derive(Debug)]
 struct RedBlackTreeStructure<T> {
     root: RedBlackTree<T>,
 }
 
-impl<T: Ord> RedBlackTreeStructure<T> {
+impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
     pub fn new() -> Self {
         Self { root: None }
     }
@@ -56,6 +57,8 @@ impl<T: Ord> RedBlackTreeStructure<T> {
             let mut parent = None;
 
             while let Some(node) = current {
+                println!("-------------------------------------------------------------");
+                println!("{:#?}",self.root);
                 let cmp = key.cmp(&node.borrow().key);
                 parent = Some(node.clone());
                 current = match cmp {
@@ -194,48 +197,6 @@ fn main() {
     rb_tree.insert(5);
     rb_tree.insert(6);
     rb_tree.insert(1);
-    rb_tree.insert(5);
 
     println!("{:#?}", rb_tree.root);
 }
-// fn main() {
-//     let mut rb_tree = RedBlackTreeStructure::new();
-
-//     // Insert nodes
-//     println!("Inserting nodes into the Red-Black Tree:");
-//     rb_tree.insert(10);
-//     rb_tree.insert(20);
-//     rb_tree.insert(30);
-//     rb_tree.insert(15);
-//     rb_tree.insert(25);
-//     rb_tree.insert(5);
-
-//     // Print the tree structure after insertions
-//     println!("\nRed-Black Tree structure after insertions:");
-//     print_tree(&rb_tree.root, 0);
-
-//     // You can add more insertions and additional tests to ensure everything works
-//     rb_tree.insert(12);
-//     rb_tree.insert(18);
-//     rb_tree.insert(8);
-
-//     // Print the tree structure after more insertions
-//     println!("\nRed-Black Tree structure after more insertions:");
-//     print_tree(&rb_tree.root, 0);
-// }
-
-// // Helper function to print the tree in a structured way
-// fn print_tree<T: std::fmt::Debug>(node: &Option<Tree<T>>, level: usize) {
-//     if let Some(n) = node {
-//         // Print current node's key and color
-//         let color = match n.borrow().color {
-//             NodeColor::Red => "Red",
-//             NodeColor::Black => "Black",
-//         };
-//         println!("{:indent$}{}: {:?} (Color: {})", "", n.borrow().key, n.borrow().key, color, indent=level * 4);
-
-//         // Print the left and right children recursively
-//         print_tree(&n.borrow().left, level + 1);
-//         print_tree(&n.borrow().right, level + 1);
-//     }
-// }
