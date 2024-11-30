@@ -61,8 +61,7 @@ impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
                 parent = Some(node.clone());
                 current = match cmp {
                     Ordering::Less => node.borrow().left.clone(),
-                    Ordering::Greater => node.borrow().right.clone(),
-                    _ => return,
+                    Ordering::Greater | Ordering::Equal => node.borrow().right.clone(),
                 };
             }
 
