@@ -38,7 +38,7 @@ struct RedBlackTreeStructure<T> {
     root: RedBlackTree<T>,
 }
 
-impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
+impl<T: Ord + std::fmt::Debug + std::fmt::Display> RedBlackTreeStructure<T> {
     pub fn new() -> Self {
         Self { root: None }
     }
@@ -182,14 +182,32 @@ impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
         left.borrow_mut().right = Some(node.clone());
         node.borrow_mut().parent = Some(Rc::downgrade(&left));
     }
-    fn number_of_leaves(root: &RedBlackTree<i32>) -> u32 {
+    fn number_of_leaves(root: &RedBlackTree<T>) -> u32 {
         if root.is_none() {
             return 0;
         }
         if root.clone().unwrap().borrow().left.is_none() && root.clone().unwrap().borrow().left.is_none() {
             return 1;
         }
-        return RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone())
+        return RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone());
+    }
+
+    fn height_of_tree(root: &RedBlackTree<T>) ->u32{
+        if root.is_none() {
+            return 0
+        }
+
+        let left_height = Self::height_of_tree(&root.clone().unwrap().borrow().left.clone());
+        let right_height = Self::height_of_tree(&root.clone().unwrap().borrow().right.clone());
+        std::cmp::max(left_height,right_height) + 1
+    }
+
+    fn in_order_traversal(root: &RedBlackTree<T>){
+        if root.is_some(){
+            Self::in_order_traversal(&root.clone().unwrap().borrow().left.clone());
+            println!("{}",root.clone().unwrap().borrow().key);
+            Self::in_order_traversal(&root.clone().unwrap().borrow().right.clone());
+        }
     }
 }
 
@@ -203,9 +221,14 @@ fn main() {
     rb_tree.insert(5);
     rb_tree.insert(6);
     rb_tree.insert(1);
+    rb_tree.insert(0);
+    rb_tree.insert(43);
 
     let count = RedBlackTreeStructure::<u32>::number_of_leaves(&rb_tree.root);
-
+    let height = RedBlackTreeStructure::height_of_tree(&rb_tree.root);
     println!("{:#?}", rb_tree.root);
-    println!("Leaf Count:{}",count);
+    println!("Leaf Count:{}", count);
+    println!("Height:{}",height);
+    println!("Tree traversal");
+    RedBlackTreeStructure::in_order_traversal(&rb_tree.root);
 }
