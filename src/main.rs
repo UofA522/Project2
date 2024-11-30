@@ -182,6 +182,15 @@ impl<T: Ord + std::fmt::Debug> RedBlackTreeStructure<T> {
         left.borrow_mut().right = Some(node.clone());
         node.borrow_mut().parent = Some(Rc::downgrade(&left));
     }
+    fn number_of_leaves(root: &RedBlackTree<i32>) -> u32 {
+        if root.is_none() {
+            return 0;
+        }
+        if root.clone().unwrap().borrow().left.is_none() && root.clone().unwrap().borrow().left.is_none() {
+            return 1;
+        }
+        return RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone())
+    }
 }
 
 fn main() {
@@ -195,6 +204,8 @@ fn main() {
     rb_tree.insert(6);
     rb_tree.insert(1);
 
+    let count = RedBlackTreeStructure::<u32>::number_of_leaves(&rb_tree.root);
 
     println!("{:#?}", rb_tree.root);
+    println!("Leaf Count:{}",count);
 }
