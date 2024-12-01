@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::fmt::format;
 use std::fs::File;
 use std::io::Write;
 use std::rc::{Rc, Weak};
@@ -73,20 +72,19 @@ impl Dotfile {
         })
     }
 
-    fn write_file(&self){
+    fn write_file(&self) {
         let mut dot_string = String::new();
         dot_string.push_str("graph {\n");
 
-        for node in &self.nodes{
-            dot_string.push_str(&format!("\t {} [label=\"{}\", color={}, style=filled, fontcolor={}];\n",node.idx,node.label,node.color,node.font_color))
+        for node in &self.nodes {
+            dot_string.push_str(&format!("\t {} [label=\"{}\", color={}, style=filled, fontcolor={}];\n", node.idx, node.label, node.color, node.font_color))
         }
-        for edge in &self.edges{
-            dot_string.push_str(&format!("\t {} -- {};\n",edge.src_id,edge.dest_id))
+        for edge in &self.edges {
+            dot_string.push_str(&format!("\t {} -- {};\n", edge.src_id, edge.dest_id))
         }
         dot_string.push_str("}\n");
         let mut dot_file = File::create(&self.filename).expect("Error while Creating file");
         dot_file.write_all(dot_string.as_bytes()).expect("W")
-
     }
 }
 
@@ -101,33 +99,30 @@ impl<T: Ord + Clone + std::fmt::Debug> TreeNode<T> {
         }))
     }
 
-    fn draw_node(node:&RedBlackTree<T>, file: &mut Dotfile, mut parent_node_idx: Option<usize>){
+    fn draw_node(node: &RedBlackTree<T>, file: &mut Dotfile, mut parent_node_idx: Option<usize>) {
         if let Some(root) = node {
-
             let root_node = match parent_node_idx {
-                None => {file.add_node(format!("{:?}",root.clone().borrow().key.clone()).as_str(),root.clone().borrow().color.clone())}
+                None => { file.add_node(format!("{:?}", root.clone().borrow().key.clone()).as_str(), root.clone().borrow().color.clone()) }
                 Some(parent_val) => {
                     parent_val
                 }
             };
 
-            if let Some(left)  = root.clone().borrow().left.clone() {
-                let left_node= file.add_node(format!("{:?}",left.borrow().key.clone()).as_str(),left.borrow().color.clone());
+            if let Some(left) = root.clone().borrow().left.clone() {
+                let left_node = file.add_node(format!("{:?}", left.borrow().key.clone()).as_str(), left.borrow().color.clone());
                 file.add_edge(root_node, left_node);
-                Self::draw_node(&root.clone().borrow().left.clone(),file,Some(left_node));
-            }
-            else {
-                let left_node = file.add_node("None",NodeColor::Black);
-                file.add_edge(root_node,left_node);
+                Self::draw_node(&root.clone().borrow().left.clone(), file, Some(left_node));
+            } else {
+                let left_node = file.add_node("None", NodeColor::Black);
+                file.add_edge(root_node, left_node);
             }
             if let Some(right) = root.clone().borrow().right.clone() {
-                let right_node = file.add_node(format!("{:?}",right.borrow().key.clone()).as_str(),right.borrow().color.clone());
-                file.add_edge(root_node,right_node);
-                Self::draw_node(&root.clone().borrow().right.clone(),file,Some(right_node));
-            }
-            else{
-                let right_node = file.add_node("None",NodeColor::Black);
-                file.add_edge(root_node,right_node);
+                let right_node = file.add_node(format!("{:?}", right.borrow().key.clone()).as_str(), right.borrow().color.clone());
+                file.add_edge(root_node, right_node);
+                Self::draw_node(&root.clone().borrow().right.clone(), file, Some(right_node));
+            } else {
+                let right_node = file.add_node("None", NodeColor::Black);
+                file.add_edge(root_node, right_node);
             }
         }
     }
@@ -317,10 +312,10 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
     }
 
     fn draw_tree(&self, file: &mut Dotfile) {
-        if self.root.is_none(){
+        if self.root.is_none() {
             println!("There is nothing to draw")
         }
-        TreeNode::draw_node(&self.root.clone(),file,None)
+        TreeNode::draw_node(&self.root.clone(), file, None)
     }
 }
 
