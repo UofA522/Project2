@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::fmt::format;
+use std::fs::File;
+use std::io::Write;
 use std::rc::{Rc, Weak};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -36,8 +38,8 @@ struct DotNode {
 }
 
 struct DotEdge {
-    src_id: u32,
-    dest_id: u32,
+    src_id: usize,
+    dest_id: usize,
 }
 
 
@@ -49,20 +51,22 @@ impl Dotfile {
             edges: Vec::new(),
         }
     }
-    fn add_node(&mut self, key: &str, node_color: NodeColor) {
+    fn add_node(&mut self, key: &str, node_color: NodeColor) -> usize {
+        let current_len = self.nodes.len();
         let color = match node_color {
             NodeColor::Red => { "red" }
             NodeColor::Black => { "black" }
         };
         self.nodes.push(DotNode {
-            idx: self.nodes.len(),
+            idx: current_len,
             label: key.to_string(),
             color: color.to_string(),
             font_color: "white".to_string(),
-        })
+        });
+        current_len
     }
 
-    fn add_edge(&mut self, key1: u32, key2: u32) {
+    fn add_edge(&mut self, key1: usize, key2: usize) {
         self.edges.push(DotEdge {
             src_id: key1,
             dest_id: key2,
@@ -80,10 +84,13 @@ impl Dotfile {
             dot_string.push_str(&format!("\t {} -- {};\n",edge.src_id,edge.dest_id))
         }
         dot_string.push_str("}\n");
+        let mut dot_file = File::create(&self.filename).expect("Error while Creating file");
+        dot_file.write_all(dot_string.as_bytes()).expect("W")
+
     }
 }
 
-impl<T: Ord + Clone> TreeNode<T> {
+impl<T: Ord + Clone + std::fmt::Debug> TreeNode<T> {
     pub fn new(key: T) -> Tree<T> {
         Rc::new(RefCell::new(TreeNode {
             color: NodeColor::Red,
@@ -93,13 +100,44 @@ impl<T: Ord + Clone> TreeNode<T> {
             right: None,
         }))
     }
+
+    fn draw_node(node:&RedBlackTree<T>, file: &mut Dotfile, mut parent_node_idx: Option<usize>){
+        if let Some(root) = node {
+
+            let root_node = match parent_node_idx {
+                None => {file.add_node(format!("{:?}",root.clone().borrow().key.clone()).as_str(),root.clone().borrow().color.clone())}
+                Some(parent_val) => {
+                    parent_val
+                }
+            };
+
+            if let Some(left)  = root.clone().borrow().left.clone() {
+                let left_node= file.add_node(format!("{:?}",left.borrow().key.clone()).as_str(),left.borrow().color.clone());
+                file.add_edge(root_node, left_node);
+                Self::draw_node(&root.clone().borrow().left.clone(),file,Some(left_node));
+            }
+            else {
+                let left_node = file.add_node("None",NodeColor::Black);
+                file.add_edge(root_node,left_node);
+            }
+            if let Some(right) = root.clone().borrow().right.clone() {
+                let right_node = file.add_node(format!("{:?}",right.borrow().key.clone()).as_str(),right.borrow().color.clone());
+                file.add_edge(root_node,right_node);
+                Self::draw_node(&root.clone().borrow().right.clone(),file,Some(right_node));
+            }
+            else{
+                let right_node = file.add_node("None",NodeColor::Black);
+                file.add_edge(root_node,right_node);
+            }
+        }
+    }
 }
 #[derive(Debug)]
 struct RedBlackTreeStructure<T> {
     root: RedBlackTree<T>,
 }
 
-impl<T: Ord + std::fmt::Debug + std::fmt::Display> RedBlackTreeStructure<T> {
+impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackTreeStructure<T> {
     pub fn new() -> Self {
         Self { root: None }
     }
@@ -277,6 +315,13 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display> RedBlackTreeStructure<T> {
         }
         false
     }
+
+    fn draw_tree(&self, file: &mut Dotfile) {
+        if self.root.is_none(){
+            println!("There is nothing to draw")
+        }
+        TreeNode::draw_node(&self.root.clone(),file,None)
+    }
 }
 
 fn main() {
@@ -299,4 +344,7 @@ fn main() {
     println!("Tree traversal");
     println!("Is tree Empty:{}", rb_tree.tree_is_empty());
     RedBlackTreeStructure::in_order_traversal(&rb_tree.root);
+    let mut dot_file = Dotfile::new("./rbt.dot");
+    rb_tree.draw_tree(&mut dot_file);
+    dot_file.write_file();
 }
