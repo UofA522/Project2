@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::fmt::format;
 use std::rc::{Rc, Weak};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,11 +16,71 @@ type RedBlackTree<T> = Option<Tree<T>>;
 
 #[derive(Debug)]
 struct TreeNode<T> {
-    pub color: NodeColor,
-    pub key: T,
-    pub parent: Option<WeakTree<T>>,
-    pub left: RedBlackTree<T>,
-    pub right: RedBlackTree<T>,
+    color: NodeColor,
+    key: T,
+    parent: Option<WeakTree<T>>,
+    left: RedBlackTree<T>,
+    right: RedBlackTree<T>,
+}
+
+struct Dotfile {
+    filename: String,
+    nodes: Vec<DotNode>,
+    edges: Vec<DotEdge>,
+}
+struct DotNode {
+    idx: usize,
+    label: String,
+    color: String,
+    font_color: String,
+}
+
+struct DotEdge {
+    src_id: u32,
+    dest_id: u32,
+}
+
+
+impl Dotfile {
+    fn new(filename: &str) -> Self {
+        Dotfile {
+            filename: filename.to_string(),
+            nodes: Vec::new(),
+            edges: Vec::new(),
+        }
+    }
+    fn add_node(&mut self, key: &str, node_color: NodeColor) {
+        let color = match node_color {
+            NodeColor::Red => { "red" }
+            NodeColor::Black => { "black" }
+        };
+        self.nodes.push(DotNode {
+            idx: self.nodes.len(),
+            label: key.to_string(),
+            color: color.to_string(),
+            font_color: "white".to_string(),
+        })
+    }
+
+    fn add_edge(&mut self, key1: u32, key2: u32) {
+        self.edges.push(DotEdge {
+            src_id: key1,
+            dest_id: key2,
+        })
+    }
+
+    fn write_file(&self){
+        let mut dot_string = String::new();
+        dot_string.push_str("graph {\n");
+
+        for node in &self.nodes{
+            dot_string.push_str(&format!("\t {} [label=\"{}\", color={}, style=filled, fontcolor={}];\n",node.idx,node.label,node.color,node.font_color))
+        }
+        for edge in &self.edges{
+            dot_string.push_str(&format!("\t {} -- {};\n",edge.src_id,edge.dest_id))
+        }
+        dot_string.push_str("}\n");
+    }
 }
 
 impl<T: Ord + Clone> TreeNode<T> {
@@ -192,27 +253,27 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display> RedBlackTreeStructure<T> {
         return RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone());
     }
 
-    fn height_of_tree(root: &RedBlackTree<T>) ->u32{
+    fn height_of_tree(root: &RedBlackTree<T>) -> u32 {
         if root.is_none() {
-            return 0
+            return 0;
         }
 
         let left_height = Self::height_of_tree(&root.clone().unwrap().borrow().left.clone());
         let right_height = Self::height_of_tree(&root.clone().unwrap().borrow().right.clone());
-        std::cmp::max(left_height,right_height) + 1
+        std::cmp::max(left_height, right_height) + 1
     }
 
-    fn in_order_traversal(root: &RedBlackTree<T>){
-        if root.is_some(){
+    fn in_order_traversal(root: &RedBlackTree<T>) {
+        if root.is_some() {
             Self::in_order_traversal(&root.clone().unwrap().borrow().left.clone());
-            println!("{}",root.clone().unwrap().borrow().key);
+            println!("{}", root.clone().unwrap().borrow().key);
             Self::in_order_traversal(&root.clone().unwrap().borrow().right.clone());
         }
     }
 
-    fn tree_is_empty(&self) -> bool{
-        if self.root.is_none(){
-            return true
+    fn tree_is_empty(&self) -> bool {
+        if self.root.is_none() {
+            return true;
         }
         false
     }
@@ -230,13 +291,12 @@ fn main() {
     rb_tree.insert(1);
     rb_tree.insert(0);
     rb_tree.insert(43);
-
     let count = RedBlackTreeStructure::<u32>::number_of_leaves(&rb_tree.root);
     let height = RedBlackTreeStructure::height_of_tree(&rb_tree.root);
     println!("{:#?}", rb_tree.root);
     println!("Leaf Count:{}", count);
-    println!("Height:{}",height);
+    println!("Height:{}", height);
     println!("Tree traversal");
-    println!("Is tree Empty:{}",rb_tree.tree_is_empty());
+    println!("Is tree Empty:{}", rb_tree.tree_is_empty());
     RedBlackTreeStructure::in_order_traversal(&rb_tree.root);
 }
