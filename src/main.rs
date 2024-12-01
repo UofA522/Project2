@@ -209,6 +209,13 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display> RedBlackTreeStructure<T> {
             Self::in_order_traversal(&root.clone().unwrap().borrow().right.clone());
         }
     }
+
+    fn tree_is_empty(&self) -> bool{
+        if self.root.is_none(){
+            return true
+        }
+        false
+    }
 }
 
 fn main() {
@@ -230,5 +237,6 @@ fn main() {
     println!("Leaf Count:{}", count);
     println!("Height:{}",height);
     println!("Tree traversal");
+    println!("Is tree Empty:{}",rb_tree.tree_is_empty());
     RedBlackTreeStructure::in_order_traversal(&rb_tree.root);
 }
