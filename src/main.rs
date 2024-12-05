@@ -317,6 +317,187 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         }
         TreeNode::draw_node(&self.root.clone(), file, None)
     }
+
+    fn find_node(&self, key: T) -> RedBlackTree<T> {
+        let mut current = self.root.clone();
+        while let Some(node) = current.clone() {
+            match key.cmp(&node.clone().borrow().key) {
+                Ordering::Less => {
+                    current = node.borrow().left.clone();
+                }
+                Ordering::Equal => {
+                    return Some(node)
+                }
+                Ordering::Greater => {
+                    current = node.borrow().right.clone();
+                }
+            }
+        }
+        None
+    }
+
+    fn find_min(&self, mut node: Tree<T>) -> Tree<T> {
+        let mut current_node = node.clone();
+        while let Some(left) = current_node.clone().borrow().left.clone() {
+            current_node = left.clone();
+        }
+        node
+    }
+
+    fn fix_delete(&mut self, mut node: Tree<T>) {
+        while let Some(parent) = node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
+            let is_left = Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap());
+            let sibling = if is_left {
+                parent.borrow().right.clone()
+            } else {
+                parent.borrow().left.clone()
+            };
+
+            if let Some(sibling_node) = sibling {
+                if sibling_node.borrow().color == NodeColor::Red {
+                    sibling_node.borrow_mut().color = NodeColor::Black;
+                    parent.borrow_mut().color = NodeColor::Red;
+                    if is_left {
+                        self.rotate_left(parent.clone());
+                    } else {
+                        self.rotate_right(parent.clone());
+                    }
+                } else {
+                    let left_black = sibling_node
+                        .borrow()
+                        .left
+                        .as_ref()
+                        .map_or(true, |left| left.borrow().color == NodeColor::Black);
+                    let right_black = sibling_node
+                        .borrow()
+                        .right
+                        .as_ref()
+                        .map_or(true, |right| right.borrow().color == NodeColor::Black);
+
+                    if left_black && right_black {
+                        sibling_node.borrow_mut().color = NodeColor::Red;
+                        node = parent.clone();
+                    } else {
+                        if is_left && right_black {
+                            sibling_node.borrow_mut().color = NodeColor::Red;
+                            sibling_node.borrow_mut().left.as_ref().unwrap().borrow_mut().color =
+                                NodeColor::Black;
+                            self.rotate_right(sibling_node.clone());
+                        } else if !is_left && left_black {
+                            sibling_node.borrow_mut().color = NodeColor::Red;
+                            sibling_node.borrow_mut().right.as_ref().unwrap().borrow_mut().color =
+                                NodeColor::Black;
+                            self.rotate_left(sibling_node.clone());
+                        }
+
+                        sibling_node.borrow_mut().color = parent.borrow().color.clone();
+                        parent.borrow_mut().color = NodeColor::Black;
+
+                        if is_left {
+                            sibling_node
+                                .borrow_mut()
+                                .right
+                                .as_ref()
+                                .unwrap()
+                                .borrow_mut()
+                                .color = NodeColor::Black;
+                            self.rotate_left(parent.clone());
+                        } else {
+                            sibling_node
+                                .borrow_mut()
+                                .left
+                                .as_ref()
+                                .unwrap()
+                                .borrow_mut()
+                                .color = NodeColor::Black;
+                            self.rotate_right(parent.clone());
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        node.borrow_mut().color = NodeColor::Black;
+    }
+
+    fn delete_node(&mut self, node: Tree<T>) {
+        let mut to_fix = node.clone();
+
+        if node.borrow().left.is_some() && node.borrow().right.is_some() {
+            // Find in-order successor
+            let successor = self.find_min(node.borrow().right.clone().unwrap());
+            node.borrow_mut().key = successor.borrow().key.clone();
+            to_fix = successor.clone();
+        }
+
+        let replacement = if to_fix.borrow().left.is_some() {
+            to_fix.borrow().left.clone()
+        } else {
+            to_fix.borrow().right.clone()
+        };
+
+        if let Some(replacement_node) = replacement.clone() {
+            replacement_node.borrow_mut().parent = to_fix.borrow().parent.clone();
+            if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
+                if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
+                    parent.borrow_mut().left = replacement.clone();
+                } else {
+                    parent.borrow_mut().right = replacement.clone();
+                }
+            } else {
+                self.root = replacement.clone();
+            }
+        } else if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
+            if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
+                parent.borrow_mut().left = None;
+            } else {
+                parent.borrow_mut().right = None;
+            }
+        } else {
+            self.root = None;
+        }
+
+        if to_fix.borrow().color == NodeColor::Black {
+            if let Some(replacement_node) = replacement {
+                self.fix_delete(replacement_node);
+            } else {
+                self.fix_delete_double_black(to_fix);
+            }
+        }
+    }
+    fn delete(&mut self, key: T) {
+        if let Some(node) = self.find_node(key) {
+            self.delete_node(node)
+        }
+    }
+
+    fn fix_delete_double_black(&mut self, node: Tree<T>) {
+        if node.borrow().parent.is_none() {
+            return;
+        }
+
+        let parent = node.borrow().parent.clone().and_then(|p| p.upgrade()).unwrap();
+        let is_left = Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap());
+        let sibling = if is_left {
+            parent.borrow().right.clone()
+        } else {
+            parent.borrow().left.clone()
+        };
+
+        // Handle sibling cases as in `fix_delete`
+        if let Some(sibling_node) = sibling {
+            // Implement double-black handling logic
+        }
+    }
+    fn find_mininmum_node(&self, node: Tree<T>) -> Tree<T> {
+        let mut current = node.clone();
+        while let Some(left) = current.clone().borrow().left.clone() {
+            current = left.clone()
+        }
+        current
+    }
 }
 
 fn main() {
@@ -329,7 +510,6 @@ fn main() {
     rb_tree.insert(5);
     rb_tree.insert(6);
     rb_tree.insert(1);
-    rb_tree.insert(0);
     rb_tree.insert(43);
     let count = RedBlackTreeStructure::<u32>::number_of_leaves(&rb_tree.root);
     let height = RedBlackTreeStructure::height_of_tree(&rb_tree.root);
@@ -342,4 +522,10 @@ fn main() {
     let mut dot_file = Dotfile::new("./rbt.dot");
     rb_tree.draw_tree(&mut dot_file);
     dot_file.write_file();
+    rb_tree.delete(30);
+    rb_tree.delete(10);
+    let mut dot_file = Dotfile::new("./rbt_after_delete.dot");
+    rb_tree.draw_tree(&mut dot_file);
+    dot_file.write_file();
+    println!("{:#?}", rb_tree.root);
 }
