@@ -427,7 +427,7 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
         if node.borrow().left.is_some() && node.borrow().right.is_some() {
             // Find in-order successor
-            let successor = self.find_min(node.borrow().right.clone().unwrap());
+            let successor = self.find_min(node.borrow().left.clone().unwrap());
             node.borrow_mut().key = successor.borrow().key.clone();
             to_fix = successor.clone();
         }
@@ -522,6 +522,7 @@ fn main() {
     let mut dot_file = Dotfile::new("./rbt.dot");
     rb_tree.draw_tree(&mut dot_file);
     dot_file.write_file();
+    rb_tree.delete(5);
     rb_tree.delete(30);
     rb_tree.delete(10);
     let mut dot_file = Dotfile::new("./rbt_after_delete.dot");
