@@ -700,7 +700,7 @@ fn main() {
     rb_tree.delete(5);
     rb_tree.delete(30);
     rb_tree.delete(10);
-    // rb_tree.delete(43);
+    rb_tree.delete(43);
     let mut dot_file = Dotfile::new("./rbt_after_delete.dot");
     rb_tree.draw_tree(&mut dot_file);
     dot_file.write_file();
