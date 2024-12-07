@@ -1,4 +1,5 @@
-use rbt::{Dotfile, RedBlackTreeStructure};
+use common::Dotfile;
+use rbt::{RedBlackTreeStructure};
 
 fn main() {
     let mut rb_tree = RedBlackTreeStructure::new();

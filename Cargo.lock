@@ -7,13 +7,24 @@ name = "Project2"
 version = "0.1.0"
 dependencies = [
  "avl",
+ "common",
  "rbt",
 ]
 
 [[package]]
 name = "avl"
 version = "0.1.0"
+dependencies = [
+ "common",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
 
 [[package]]
 name = "rbt"
 version = "0.1.0"
+dependencies = [
+ "common",
+]
