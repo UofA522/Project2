@@ -3,4 +3,13 @@ name = "Project2"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+    "./src/rbt",
+    "./src/avl",
+]
+
+
 [dependencies]
+rbt = { path = "./src/rbt" }
+avl = { path = "./src/avl" }

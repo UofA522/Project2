@@ -3,17 +3,5 @@
 version = 3
 
 [[package]]
-name = "Project2"
-version = "0.1.0"
-dependencies = [
- "avl",
- "rbt",
-]
-
-[[package]]
-name = "avl"
-version = "0.1.0"
-
-[[package]]
 name = "rbt"
 version = "0.1.0"
