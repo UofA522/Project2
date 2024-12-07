@@ -426,6 +426,7 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         let mut to_fix = node.clone();
 
         if node.borrow().left.is_some() && node.borrow().right.is_some() {
+            // Find the in-order successor
             let successor = self.find_min(node.borrow().right.clone().unwrap());
             node.borrow_mut().key = successor.borrow().key.clone();
             to_fix = successor.clone();
@@ -438,10 +439,7 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         };
 
         if let Some(replacement_node) = replacement.clone() {
-            // Update parent reference of the replacement
             replacement_node.borrow_mut().parent = to_fix.borrow().parent.clone();
-
-            // Update parent's child reference
             if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
                 if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
                     parent.borrow_mut().left = replacement.clone();
@@ -449,30 +447,102 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                     parent.borrow_mut().right = replacement.clone();
                 }
             } else {
-                // If no parent, this was the root node
                 self.root = replacement.clone();
             }
         } else if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
-            // If no replacement, just remove the reference from the parent
             if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
                 parent.borrow_mut().left = None;
             } else {
                 parent.borrow_mut().right = None;
             }
         } else {
-            // If no parent, this was the root node
             self.root = None;
         }
 
-        // Fix violations if the deleted node was black
         if to_fix.borrow().color == NodeColor::Black {
             if let Some(replacement_node) = replacement {
                 self.fix_delete(replacement_node);
             } else {
                 self.fix_delete_double_black(to_fix);
             }
+        } else if let Some(replacement_node) = replacement {
+            self.fix_double_red(replacement_node);
         }
     }
+
+    fn fix_double_red(&mut self, mut node: Tree<T>) {
+        while let Some(parent) = node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
+            // If the parent is black, there's no double-red violation
+            if parent.borrow().color == NodeColor::Black {
+                break;
+            }
+
+            if let Some(grandparent) = parent.borrow().parent.clone().and_then(|p| p.upgrade()) {
+                let is_left = Rc::ptr_eq(&parent, &grandparent.borrow().left.as_ref().unwrap());
+                let uncle = if is_left {
+                    grandparent.borrow().right.clone()
+                } else {
+                    grandparent.borrow().left.clone()
+                };
+
+                if let Some(uncle_node) = uncle {
+                    if uncle_node.borrow().color == NodeColor::Red {
+                        // Case 1: Uncle is red
+                        parent.borrow_mut().color = NodeColor::Black;
+                        uncle_node.borrow_mut().color = NodeColor::Black;
+                        grandparent.borrow_mut().color = NodeColor::Red;
+                        drop(node);
+                        node = grandparent; // Move up to grandparent
+                    } else {
+                        // Case 2: Uncle is black, perform rotations
+                        if is_left {
+                            if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
+                                self.rotate_left(parent.clone());
+                                node = parent.clone();
+                            }
+                            self.rotate_right(grandparent.clone());
+                        } else {
+                            if Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap()) {
+                                self.rotate_right(parent.clone());
+                                node = parent.clone();
+                            }
+                            self.rotate_left(grandparent.clone());
+                        }
+
+                        parent.borrow_mut().color = NodeColor::Black;
+                        grandparent.borrow_mut().color = NodeColor::Red;
+                        break;
+                    }
+                } else {
+                    // Case 3: No uncle (treat as Case 2)
+                    if is_left {
+                        if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
+                            self.rotate_left(parent.clone());
+                            node = parent.clone();
+                        }
+                        self.rotate_right(grandparent.clone());
+                    } else {
+                        if Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap()) {
+                            self.rotate_right(parent.clone());
+                            node = parent.clone();
+                        }
+                        self.rotate_left(grandparent.clone());
+                    }
+
+                    parent.borrow_mut().color = NodeColor::Black;
+                    grandparent.borrow_mut().color = NodeColor::Red;
+                    break;
+                }
+            } else {
+                break; // No grandparent, stop fixing
+            }
+        }
+
+        // Ensure root is black
+        self.root.as_ref().unwrap().borrow_mut().color = NodeColor::Black;
+    }
+
+
 
     fn delete(&mut self, key: T) {
         if let Some(node) = self.find_node(key) {
