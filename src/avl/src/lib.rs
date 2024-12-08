@@ -33,9 +33,15 @@ impl<T: Ord> AVLTreeNode<T> {
 
 impl<T: Ord> AVLTreeNode<T> {
     fn height(node: &AVLTree<T>) -> i32 {
-        node.as_ref()
-            .map(|n| AVLTreeNode::height(&n.borrow().left).max(AVLTreeNode::height(&n.borrow().right)) + 1)
-            .unwrap_or(0)
+        if node.is_none() {
+            return 0;
+        }
+
+        let node_ref = node.as_ref().unwrap(); // Unwrap the node safely
+        let left_height = Self::height(&node_ref.borrow().left);
+        let right_height = Self::height(&node_ref.borrow().right);
+
+        std::cmp::max(left_height, right_height) + 1
     }
 
     fn update_height(&mut self) {
