@@ -1,4 +1,6 @@
 use std::cell::RefCell;
+use std::cmp::Ordering;
+use std::collections::hash_map::Keys;
 use std::rc::{Rc, Weak};
 use common::{DotNodeColor, Dotfile};
 
@@ -276,6 +278,32 @@ impl<T: Ord + Clone + std::fmt::Debug + std::fmt::Display> AVLTreeStructure<T> {
             return true;
         }
         false
+    }
+
+    fn find_node(&self,key: T) -> AVLTree<T>{
+        let mut current = self.root.clone();
+        while let Some(node) = current.clone() {
+            match key.cmp(&node.clone().borrow().key) {
+                Ordering::Less => {
+                    current = node.borrow().left.clone();
+                }
+                Ordering::Equal => {
+                    return Some(node)
+                }
+                Ordering::Greater => {
+                    current = node.borrow().right.clone();
+                }
+            }
+        }
+        None
+    }
+    pub fn find_by_key(&self, key:T) -> AVLTree<T> {
+        if self.tree_is_empty() {
+            None
+        }
+        else {
+            self.find_node(key)
+        }
     }
 }
 

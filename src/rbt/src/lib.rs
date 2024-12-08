@@ -623,4 +623,13 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         }
         current
     }
+
+    pub fn find_by_key(&self, key:T) -> RedBlackTree<T> {
+        if self.tree_is_empty() {
+            None
+        }
+        else {
+            self.find_node(key)
+        }
+    }
 }

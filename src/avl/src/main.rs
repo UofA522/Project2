@@ -13,6 +13,10 @@ fn main() {
     avl.insert(26);
     avl.insert(34);
     avl.insert(30);
+    println!("Searching 10");
+    println!("{:#?}",avl.find_by_key(10));
+    println!("Searching 0");
+    println!("{:#?}",avl.find_by_key(0));
     println!("{:#?}", avl);
     let mut dot_file = Dotfile::new("./avl.dot");
     avl.draw_tree(&mut dot_file);

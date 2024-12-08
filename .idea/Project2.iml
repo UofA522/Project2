@@ -6,6 +6,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/avl/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/common/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/rbt/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/avl/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/rbt/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/src/avl/target" />
       <excludeFolder url="file://$MODULE_DIR$/src/rbt/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
