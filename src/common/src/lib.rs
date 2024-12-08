@@ -38,7 +38,7 @@ impl Dotfile {
         let color = match node_color {
             DotNodeColor::Red => { "red" }
             DotNodeColor::Black => { "black" }
-            DotNodeColor::Green => { "green"}
+            DotNodeColor::Green => { "darkgreen"}
         };
         self.nodes.push(DotNode {
             idx: current_len,

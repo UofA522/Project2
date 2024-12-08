@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
+use common::{DotNodeColor, Dotfile};
 
 type AVLTreeStrong<T> = Rc<RefCell<AVLTreeNode<T>>>;
 type AVLTree<T> = Option<AVLTreeStrong<T>>;
@@ -31,7 +32,7 @@ impl<T: Ord> AVLTreeNode<T> {
     }
 }
 
-impl<T: Ord> AVLTreeNode<T> {
+impl<T: Ord + Clone + std::fmt::Debug> AVLTreeNode<T> {
     fn height(node: &AVLTree<T>) -> i32 {
         if node.is_none() {
             return 0;
@@ -105,9 +106,37 @@ impl<T: Ord> AVLTreeNode<T> {
         }
         node.clone()
     }
+
+    fn draw_node(node: &AVLTree<T>, file: &mut Dotfile, mut parent_node_idx: Option<usize>) {
+        if let Some(root) = node {
+            let root_node = match parent_node_idx {
+                None => { file.add_node(format!("{:?}", root.clone().borrow().key.clone()).as_str(), DotNodeColor::Green) }
+                Some(parent_val) => {
+                    parent_val
+                }
+            };
+
+            if let Some(left) = root.clone().borrow().left.clone() {
+                let left_node = file.add_node(format!("{:?}", left.borrow().key.clone()).as_str(), DotNodeColor::Green);
+                file.add_edge(root_node, left_node);
+                Self::draw_node(&root.clone().borrow().left.clone(), file, Some(left_node));
+            } else {
+                let left_node = file.add_node("None", DotNodeColor::Green);
+                file.add_edge(root_node, left_node);
+            }
+            if let Some(right) = root.clone().borrow().right.clone() {
+                let right_node = file.add_node(format!("{:?}", right.borrow().key.clone()).as_str(), DotNodeColor::Green);
+                file.add_edge(root_node, right_node);
+                Self::draw_node(&root.clone().borrow().right.clone(), file, Some(right_node));
+            } else {
+                let right_node = file.add_node("None", DotNodeColor::Green);
+                file.add_edge(root_node, right_node);
+            }
+        }
+    }
 }
 
-impl<T: Ord + Clone> AVLTreeStructure<T> {
+impl<T: Ord + Clone + std::fmt::Debug> AVLTreeStructure<T> {
 
     pub fn new() -> Self{
         AVLTreeStructure{
@@ -207,6 +236,13 @@ impl<T: Ord + Clone> AVLTreeStructure<T> {
             current = Some(n.clone());
         }
         current
+    }
+
+    pub fn draw_tree(&self, file: &mut Dotfile) {
+        if self.root.is_none() {
+            println!("There is nothing to draw")
+        }
+        AVLTreeNode::draw_node(&self.root.clone(), file, None)
     }
 
 }
