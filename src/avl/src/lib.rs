@@ -83,29 +83,31 @@ impl<T: Ord> AVLTreeNode<T> {
         right_child
     }
 
-    fn balance(node: AVLTreeStrong<T>) -> AVLTreeStrong<T> {
+    fn balance(node: &AVLTreeStrong<T>) -> AVLTreeStrong<T> {
         node.borrow_mut().update_height();
         let balance = node.borrow().balance_factor();
         if balance > 1 {
-            if node.borrow().left.as_ref().unwrap().borrow().balance_factor() < 0 {
-                node.borrow_mut().left = Some(Self::rotate_left(
-                    node.borrow().left.as_ref().unwrap().clone(),
+            if node.borrow().left.clone().unwrap().borrow().balance_factor() < 0 {
+                let mut node_borrow = node.borrow_mut();
+                node_borrow.left = Some(Self::rotate_left(
+                    node_borrow.left.clone().unwrap().clone(),
                 ));
             }
-            return Self::rotate_right(node);
+            return Self::rotate_right(node.clone());
         } else if balance < -1 {
-            if node.borrow().right.as_ref().unwrap().borrow().balance_factor() > 0 {
-                node.borrow_mut().right = Some(Self::rotate_right(
-                    node.borrow().right.as_ref().unwrap().clone(),
+            if node.borrow().right.clone().unwrap().borrow().balance_factor() > 0 {
+                let mut node_borrow = node.borrow_mut();
+                node_borrow.right = Some(Self::rotate_right(
+                    node_borrow.right.clone().unwrap().clone(),
                 ));
             }
-            return Self::rotate_left(node);
+            return Self::rotate_left(node.clone());
         }
-        node
+        node.clone()
     }
 }
 
-impl<T: Ord> AVLTreeStructure<T> {
+impl<T: Ord + Clone> AVLTreeStructure<T> {
 
     pub fn new() -> Self{
         AVLTreeStructure{
@@ -133,7 +135,7 @@ impl<T: Ord> AVLTreeStructure<T> {
             }
         }
         // Balance the tree and update height
-        AVLTreeNode::balance(node)
+        AVLTreeNode::balance(&node)
     }
 
     pub fn insert(&mut self, key: T) {
@@ -143,6 +145,70 @@ impl<T: Ord> AVLTreeStructure<T> {
             self.root = Some(AVLTreeNode::new(key));
         }
     }
+
+    pub fn delete(&mut self, key: T) {
+        if let Some(root) = self.root.clone() {
+            self.root = Self::delete_node(root, key);
+        }
+    }
+
+    fn delete_node(node: AVLTreeStrong<T>, key: T) -> AVLTree<T> {
+        // Borrow the node mutably once
+        let mut node_borrow = node.borrow_mut();
+
+        if key < node_borrow.key {
+            // Look in the left subtree
+            if node_borrow.left.is_some() {
+                let left = node_borrow.left.take().unwrap();
+                node_borrow.left = Self::delete_node(left, key);
+            }
+        } else if key > node_borrow.key {
+            // Look in the right subtree
+            if node_borrow.right.is_some() {
+                let right = node_borrow.right.take().unwrap();
+                node_borrow.right = Self::delete_node(right, key);
+            }
+        } else {
+            // Node to be deleted found
+            if node_borrow.left.is_none() && node_borrow.right.is_none() {
+                // Case 1: Node has no children
+                return None;
+            } else if node_borrow.left.is_none() {
+                // Case 2: Node has only right child
+                return node_borrow.right.take();
+            } else if node_borrow.right.is_none() {
+                // Case 3: Node has only left child
+                return node_borrow.left.take();
+            } else {
+                // Case 4: Node has two children
+                // Find the in-order successor (the smallest node in the right subtree)
+                if let Some(successor) = Self::min_node(node_borrow.right.clone()) {
+                    // Replace current node with successor's key
+                    node_borrow.key = successor.borrow().key.clone();
+                    // Delete the successor node from the right subtree
+                    node_borrow.right = Self::delete_node(successor.clone(), successor.borrow().key.clone());
+                }
+            }
+        }
+
+        // Drop the mutable borrow here
+        drop(node_borrow);
+
+        // After the borrow is dropped, we can balance the node
+        Some(AVLTreeNode::balance(&node))
+    }
+
+
+
+
+    fn min_node(node: AVLTree<T>) -> Option<AVLTreeStrong<T>> {
+        let mut current = node;
+        while let Some(ref n) = current.clone().unwrap().borrow().left {
+            current = Some(n.clone());
+        }
+        current
+    }
+
 }
 
 
