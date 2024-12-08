@@ -7,9 +7,11 @@ graph {
 	 5 [label="15", color=black, style=filled, fontcolor=white];
 	 6 [label="None", color=black, style=filled, fontcolor=white];
 	 7 [label="None", color=black, style=filled, fontcolor=white];
-	 8 [label="25", color=red, style=filled, fontcolor=white];
-	 9 [label="None", color=black, style=filled, fontcolor=white];
+	 8 [label="31", color=black, style=filled, fontcolor=white];
+	 9 [label="25", color=red, style=filled, fontcolor=white];
 	 10 [label="None", color=black, style=filled, fontcolor=white];
+	 11 [label="None", color=black, style=filled, fontcolor=white];
+	 12 [label="None", color=black, style=filled, fontcolor=white];
 	 0 -- 1;
 	 1 -- 2;
 	 2 -- 3;
@@ -19,5 +21,7 @@ graph {
 	 5 -- 7;
 	 0 -- 8;
 	 8 -- 9;
-	 8 -- 10;
+	 9 -- 10;
+	 9 -- 11;
+	 8 -- 12;
 }

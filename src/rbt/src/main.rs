@@ -8,7 +8,7 @@ fn main() {
     rb_tree.insert(30);
     rb_tree.insert(15);
     rb_tree.insert(25);
-    rb_tree.insert(26);
+    rb_tree.insert(31);
     rb_tree.insert(5);
     rb_tree.insert(6);
     rb_tree.insert(1);

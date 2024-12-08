@@ -11,13 +11,15 @@ graph {
 	 9 [label="15", color=black, style=filled, fontcolor=white];
 	 10 [label="None", color=black, style=filled, fontcolor=white];
 	 11 [label="None", color=black, style=filled, fontcolor=white];
-	 12 [label="30", color=black, style=filled, fontcolor=white];
-	 13 [label="25", color=red, style=filled, fontcolor=white];
+	 12 [label="30", color=red, style=filled, fontcolor=white];
+	 13 [label="25", color=black, style=filled, fontcolor=white];
 	 14 [label="None", color=black, style=filled, fontcolor=white];
 	 15 [label="None", color=black, style=filled, fontcolor=white];
-	 16 [label="43", color=red, style=filled, fontcolor=white];
+	 16 [label="31", color=black, style=filled, fontcolor=white];
 	 17 [label="None", color=black, style=filled, fontcolor=white];
-	 18 [label="None", color=black, style=filled, fontcolor=white];
+	 18 [label="43", color=red, style=filled, fontcolor=white];
+	 19 [label="None", color=black, style=filled, fontcolor=white];
+	 20 [label="None", color=black, style=filled, fontcolor=white];
 	 0 -- 1;
 	 1 -- 2;
 	 2 -- 3;
@@ -36,4 +38,6 @@ graph {
 	 12 -- 16;
 	 16 -- 17;
 	 16 -- 18;
+	 18 -- 19;
+	 18 -- 20;
 }
