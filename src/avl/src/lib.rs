@@ -7,7 +7,7 @@ type AVLTree<T> = Option<AVLTreeStrong<T>>;
 type AVLWeakTree<T> = Weak<RefCell<AVLTreeNode<T>>>;
 
 #[derive(Debug)]
-struct AVLTreeNode<T> {
+pub struct AVLTreeNode<T> {
     pub key: T,
     pub parent: Option<AVLWeakTree<T>>,
     pub left: AVLTree<T>,
@@ -17,7 +17,7 @@ struct AVLTreeNode<T> {
 
 #[derive(Debug)]
 pub struct AVLTreeStructure<T> {
-    root: AVLTree<T>,
+    pub root: AVLTree<T>,
 }
 
 impl<T: Ord> AVLTreeNode<T> {
@@ -136,7 +136,7 @@ impl<T: Ord + Clone + std::fmt::Debug> AVLTreeNode<T> {
     }
 }
 
-impl<T: Ord + Clone + std::fmt::Debug> AVLTreeStructure<T> {
+impl<T: Ord + Clone + std::fmt::Debug + std::fmt::Display> AVLTreeStructure<T> {
 
     pub fn new() -> Self{
         AVLTreeStructure{
@@ -245,6 +245,38 @@ impl<T: Ord + Clone + std::fmt::Debug> AVLTreeStructure<T> {
         AVLTreeNode::draw_node(&self.root.clone(), file, None)
     }
 
+    pub fn number_of_leaves(root: &AVLTree<T>) -> u32 {
+        if root.is_none() {
+            return 0;
+        }
+        if root.clone().unwrap().borrow().left.is_none() && root.clone().unwrap().borrow().right.is_none() {
+            return 1;
+        }
+        return AVLTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + AVLTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone());
+    }
+    pub fn height_of_tree(root: &AVLTree<T>) -> u32 {
+        if root.is_none() {
+            return 0;
+        }
+
+        let left_height = Self::height_of_tree(&root.clone().unwrap().borrow().left.clone());
+        let right_height = Self::height_of_tree(&root.clone().unwrap().borrow().right.clone());
+        std::cmp::max(left_height, right_height) + 1
+    }
+
+    pub fn in_order_traversal(root: &AVLTree<T>) {
+        if root.is_some() {
+            Self::in_order_traversal(&root.clone().unwrap().borrow().left.clone());
+            println!("{}", root.clone().unwrap().borrow().key);
+            Self::in_order_traversal(&root.clone().unwrap().borrow().right.clone());
+        }
+    }
+    pub fn tree_is_empty(&self) -> bool {
+        if self.root.is_none() {
+            return true;
+        }
+        false
+    }
 }
 
 

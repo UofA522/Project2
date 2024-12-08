@@ -24,4 +24,10 @@ fn main() {
     avl.draw_tree(&mut dot_file);
     dot_file.write_file();
     println!("{:#?}", avl);
+    let number_of_leaves = AVLTreeStructure::number_of_leaves(&avl.root);
+    let mut height_of_tree = AVLTreeStructure::height_of_tree(&avl.root);
+    println!("Number of leaves:{}",number_of_leaves);
+    println!("Height of Tree:{}",height_of_tree);
+    AVLTreeStructure::in_order_traversal(&avl.root);
+    println!("Is tree empty: {}",avl.tree_is_empty());
 }

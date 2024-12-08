@@ -230,7 +230,7 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         if root.is_none() {
             return 0;
         }
-        if root.clone().unwrap().borrow().left.is_none() && root.clone().unwrap().borrow().left.is_none() {
+        if root.clone().unwrap().borrow().left.is_none() && root.clone().unwrap().borrow().right.is_none() {
             return 1;
         }
         return RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().left.clone()) + RedBlackTreeStructure::<T>::number_of_leaves(&root.clone().unwrap().borrow().right.clone());
