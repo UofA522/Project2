@@ -13,10 +13,27 @@ fn insert_and_search_avl(size:i32){
     }
 }
 
+fn insert(size:i32) -> AVLTreeStructure<i32> {
+    let mut avl = AVLTreeStructure::new();
+    for i in (0..size)
+    {
+        avl.insert(i);
+    }
+    return avl
+}
+
+fn search(numbers:Vec<i32>,avl: &AVLTreeStructure<i32>) {
+    for i in numbers {
+        avl.find_by_key(i);
+    }
+}
+
 fn criterion_benchmark(c: &mut Criterion) {
 
     for i in vec![10000,40000,70000,100000,130000] {
-        c.bench_function(format!("avl_insert_and_search{}",i).as_str(), |b| b.iter(|| insert_and_search_avl(black_box(i))));
+        let avl = insert(i);
+        c.bench_function(format!("avl_insert_{}",i).as_str(), |b| b.iter(|| insert(black_box(i))));
+        c.bench_function(format!("avl_search_{}",i).as_str(), |b| b.iter(|| search(black_box((0..i/10).collect()),black_box(&avl))));
     }
 }
 

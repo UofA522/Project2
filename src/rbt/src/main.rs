@@ -13,6 +13,8 @@ fn main() {
     rb_tree.insert(6);
     rb_tree.insert(1);
     rb_tree.insert(43);
+    println!("Searching 5");
+    println!("{:#?}",rb_tree.find_by_key(5));
     let count = RedBlackTreeStructure::<u32>::number_of_leaves(&rb_tree.root);
     let height = RedBlackTreeStructure::height_of_tree(&rb_tree.root);
     println!("{:#?}", rb_tree.root);
