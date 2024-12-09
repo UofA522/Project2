@@ -525,7 +525,12 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
     fn fix_delete_double_black(&mut self, mut node: Tree<T>) {
         while let Some(parent) = node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
-            let is_left = Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap());
+            let is_left:bool = if parent.borrow().left.is_some() {
+                Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap())
+            }
+            else { 
+                false
+            };
             let sibling = if is_left {
                 parent.borrow().right.clone()
             } else {

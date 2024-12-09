@@ -14,3 +14,4 @@ members = [
 rbt = { path = "./src/rbt" }
 avl = { path = "./src/avl" }
 common = {path = "./src/common"}
+clap = { version = "4.5.20", features = ["derive"] }
