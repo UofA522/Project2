@@ -3,7 +3,6 @@ use rbt::{RedBlackTreeStructure};
 use avl::AVLTreeStructure;
 use std::process::Command;
 
-use std::env;
 use clap::Parser;
 use std::io;
 // #[derive(Debug, Clone)]
@@ -32,7 +31,7 @@ fn main() {
         "RedBlackTree" => {
             println!("RBT chosen");
             let mut rb_tree = RedBlackTreeStructure::new();
-            while true {
+            loop {
                 println!("Enter 1 for Insertion operation");
                 println!("Enter 2 for Deletion operation");
                 println!("Enter 3 for Number of leaves in the Tree");
@@ -40,6 +39,7 @@ fn main() {
                 println!("Enter 5 for In-order traversal of the Tree");
                 println!("Enter 6 to check if the tree is empty");
                 println!("Enter 7 to print the tree showing its structure");
+                println!("Enter 0 to exit the process");
                 
                 let mut input_line = String::new();
                 io::stdin().read_line(&mut input_line).expect("Failed to read line");
@@ -48,7 +48,7 @@ fn main() {
                 
                 match choice {
                     1 => {
-                        println!("Enter a comma-separated list of numbers:");
+                        println!("Enter a comma-separated list of numbers without any spaces:");
                         let mut input = String::new();
                         io::stdin().read_line(&mut input).expect("Failed to read input");
     
@@ -124,7 +124,7 @@ fn main() {
             println!("AVL chosen");
             let mut avl = AVLTreeStructure::new();
             
-            while true {
+            loop {
                 println!("Enter 1 for Insertion operation");
                 println!("Enter 2 for Deletion operation");
                 println!("Enter 3 for Number of leaves in the Tree");
@@ -132,6 +132,7 @@ fn main() {
                 println!("Enter 5 for In-order traversal of the Tree");
                 println!("Enter 6 to check if the tree is empty");
                 println!("Enter 7 to print the tree showing its structure");
+                println!("Enter 0 to exit the process");
 
                 let mut input_line = String::new();
                 io::stdin().read_line(&mut input_line).expect("Failed to read line");
@@ -140,7 +141,7 @@ fn main() {
 
                 match choice {
                     1 => {
-                        println!("Enter a comma-separated list of numbers:");
+                        println!("Enter a comma-separated list of numbers without any spaces:");
                         let mut input = String::new();
                         io::stdin().read_line(&mut input).expect("Failed to read input");
 
@@ -168,7 +169,7 @@ fn main() {
                     }
 
                     4 => {
-                        let mut height_of_tree = AVLTreeStructure::height_of_tree(&avl.root);
+                        let height_of_tree = AVLTreeStructure::height_of_tree(&avl.root);
                         println!("The height of this AVL Tree is {}", height_of_tree);
                     }
 

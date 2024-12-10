@@ -152,7 +152,7 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                 }
 
                 if is_left {
-                    if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
+                    if parent.borrow().right.is_some() && Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
                         drop(parent.clone());
                         drop(node);
                         self.rotate_left(parent.clone());
