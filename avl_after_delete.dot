@@ -23,9 +23,7 @@ graph {
 	 21 [label="11", color=darkgreen, style=filled, fontcolor=white];
 	 22 [label="None", color=darkgreen, style=filled, fontcolor=white];
 	 23 [label="None", color=darkgreen, style=filled, fontcolor=white];
-	 24 [label="13", color=darkgreen, style=filled, fontcolor=white];
-	 25 [label="None", color=darkgreen, style=filled, fontcolor=white];
-	 26 [label="None", color=darkgreen, style=filled, fontcolor=white];
+	 24 [label="None", color=darkgreen, style=filled, fontcolor=white];
 	 0 -- 1;
 	 1 -- 2;
 	 2 -- 3;
@@ -50,6 +48,4 @@ graph {
 	 21 -- 22;
 	 21 -- 23;
 	 20 -- 24;
-	 24 -- 25;
-	 24 -- 26;
 }

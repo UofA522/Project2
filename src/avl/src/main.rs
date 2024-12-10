@@ -25,7 +25,7 @@ fn main() {
     avl.draw_tree(&mut dot_file);
     dot_file.write_file();
     // avl.delete(6);
-    //avl.delete(25);
+    avl.delete(13);
     println!("After delete");
     let mut dot_file = Dotfile::new("./avl_after_delete.dot");
     avl.draw_tree(&mut dot_file);
