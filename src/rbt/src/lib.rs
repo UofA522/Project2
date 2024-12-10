@@ -296,12 +296,10 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
     fn fix_delete(&mut self, mut node: Tree<T>) {
         while let Some(parent) = node.borrow().parent.clone().and_then(|p| p.upgrade()) {
-            // If the parent is black, there's no violation
             if parent.borrow().color == NodeColor::Black {
                 break;
             }
 
-            // Handle red node violations
             let is_left = Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap());
             let sibling = if is_left {
                 parent.borrow().right.clone()
@@ -311,7 +309,6 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
             if let Some(sibling_node) = sibling {
                 if sibling_node.borrow().color == NodeColor::Red {
-                    // If sibling is red, rotate to fix the double-red violation
                     sibling_node.borrow_mut().color = NodeColor::Black;
                     parent.borrow_mut().color = NodeColor::Red;
                     if is_left {
@@ -320,18 +317,15 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                         self.rotate_right(parent.clone());
                     }
                 } else {
-                    // Handle black sibling cases with more careful fixing
                     self.handle_black_sibling_case(node.clone(), sibling_node.clone(), parent.clone());
                 }
             }
         }
 
-        // Ensure root is black
         self.root.as_ref().unwrap().borrow_mut().color = NodeColor::Black;
     }
 
     fn handle_black_sibling_case(&mut self, node: Tree<T>, sibling: Tree<T>, parent: Tree<T>) {
-        // If both children of the sibling are black, recolor and propagate the fix upwards
         let left_black = sibling.borrow().left.as_ref().map_or(true, |left| left.borrow().color == NodeColor::Black);
         let right_black = sibling.borrow().right.as_ref().map_or(true, |right| right.borrow().color == NodeColor::Black);
 
@@ -343,33 +337,25 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                 parent.borrow_mut().color = NodeColor::Black;
             }
         } else {
-            // Handle cases where at least one child is red, perform rotation and recoloring
             self.fix_red_sibling_case(node, sibling, parent);
         }
     }
 
     fn fix_red_sibling_case(&mut self, node: Tree<T>, sibling: Tree<T>, parent: Tree<T>) {
         let is_left = Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap());
-
-        // If the sibling's left child is red, rotate accordingly
         if is_left && sibling.borrow().right.as_ref().map_or(false, |n| n.borrow().color == NodeColor::Red) {
-            // Right child of sibling is red, perform left rotation on sibling
             self.rotate_left(sibling.clone());
         } else if !is_left && sibling.borrow().left.as_ref().map_or(false, |n| n.borrow().color == NodeColor::Red) {
-            // Left child of sibling is red, perform right rotation on sibling
             self.rotate_right(sibling.clone());
         }
 
-        // Now perform rotations on parent to fix the issue
         sibling.borrow_mut().color = parent.borrow().color.clone();
         parent.borrow_mut().color = NodeColor::Black;
 
         if is_left {
-            // After the rotation, set sibling's right child to black and rotate left on parent
             sibling.borrow_mut().right.as_ref().unwrap().borrow_mut().color = NodeColor::Black;
             self.rotate_left(parent.clone());
         } else {
-            // After the rotation, set sibling's left child to black and rotate right on parent
             sibling.borrow_mut().left.as_ref().unwrap().borrow_mut().color = NodeColor::Black;
             self.rotate_right(parent.clone());
         }
@@ -381,25 +367,17 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
         let mut to_fix = node.clone();
 
         if node.borrow().left.is_some() && node.borrow().right.is_some() {
-            // Step 1: Find the in-order successor if the node has two children
             let successor = self.find_min(node.borrow().right.clone().unwrap());
-            node.borrow_mut().key = successor.borrow().key.clone();  // Replace key
-            to_fix = successor.clone(); // Now delete the successor node
+            node.borrow_mut().key = successor.borrow().key.clone();
+            to_fix = successor.clone();
         }
-
-        // Step 2: Find the replacement (either left or right child)
         let replacement = if to_fix.borrow().left.is_some() {
             to_fix.borrow().left.clone()
         } else {
             to_fix.borrow().right.clone()
         };
-
-        // Step 3: Handle the replacement
         if let Some(replacement_node) = replacement.clone() {
-            // Update the parent of the replacement node
             replacement_node.borrow_mut().parent = to_fix.borrow().parent.clone();
-
-            // Update the parent's child reference to point to the replacement
             if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
                 if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
                     parent.borrow_mut().left = replacement.clone();
@@ -407,27 +385,22 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                     parent.borrow_mut().right = replacement.clone();
                 }
             } else {
-                self.root = replacement.clone(); // This is the root node
+                self.root = replacement.clone();
             }
         } else if let Some(parent) = to_fix.borrow().parent.clone().and_then(|p| p.upgrade()) {
-            // No replacement, just remove the reference from the parent
             if Rc::ptr_eq(&to_fix, &parent.borrow().left.as_ref().unwrap()) {
                 parent.borrow_mut().left = None;
             } else {
                 parent.borrow_mut().right = None;
             }
         } else {
-            // If no parent, the node is the root node
             self.root = None;
         }
 
-        // Step 4: Fix the red-black properties after deletion
         if to_fix.borrow().color == NodeColor::Black {
             if let Some(replacement_node) = replacement {
-                // If the node deleted was black, fix the double-black violation
                 self.fix_delete(replacement_node);
             } else {
-                // If replacement was null, fix double-black violation for parent
                 self.fix_delete_double_black(to_fix);
             }
         }
@@ -436,7 +409,6 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
     fn fix_double_red(&mut self, mut node: Tree<T>) {
         while let Some(parent) = node.clone().borrow().parent.clone().and_then(|p| p.upgrade()) {
-            // If the parent is black, no double-red violation exists
             if parent.borrow().color == NodeColor::Black {
                 break;
             }
@@ -451,31 +423,25 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
                 if let Some(uncle_node) = uncle {
                     if uncle_node.borrow().color == NodeColor::Red {
-                        // Case 1: Uncle is red - recolor parent, uncle, and grandparent
                         parent.borrow_mut().color = NodeColor::Black;
                         uncle_node.borrow_mut().color = NodeColor::Black;
                         grandparent.borrow_mut().color = NodeColor::Red;
                         drop(node);
-                        node = grandparent; // Move up to grandparent
+                        node = grandparent;
                     } else {
-                        // Case 2: Uncle is black, perform rotations
                         if is_left {
                             if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
-                                // Left-right case
                                 self.rotate_left(parent.clone());
                                 node = parent.clone();
                             }
-                            // Left-left case
                             parent.borrow_mut().color = NodeColor::Black;
                             grandparent.borrow_mut().color = NodeColor::Red;
                             self.rotate_right(grandparent.clone());
                         } else {
                             if Rc::ptr_eq(&node, &parent.borrow().left.as_ref().unwrap()) {
-                                // Right-left case
                                 self.rotate_right(parent.clone());
                                 node = parent.clone();
                             }
-                            // Right-right case
                             parent.borrow_mut().color = NodeColor::Black;
                             grandparent.borrow_mut().color = NodeColor::Red;
                             self.rotate_left(grandparent.clone());
@@ -483,7 +449,6 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                         break;
                     }
                 } else {
-                    // Case 3: No uncle (treat as Case 2 with rotations)
                     if is_left {
                         if Rc::ptr_eq(&node, &parent.borrow().right.as_ref().unwrap()) {
                             self.rotate_left(parent.clone());
@@ -504,11 +469,9 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                     break;
                 }
             } else {
-                break; // No grandparent, stop fixing
+                break;
             }
         }
-
-        // Ensure the root is black
         self.root.as_ref().unwrap().borrow_mut().color = NodeColor::Black;
     }
 
@@ -539,7 +502,6 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
 
             if let Some(sibling_node) = sibling {
                 if sibling_node.borrow().color == NodeColor::Red {
-                    // Case 1: Sibling is red
                     sibling_node.borrow_mut().color = NodeColor::Black;
                     parent.borrow_mut().color = NodeColor::Red;
                     if is_left {
@@ -560,25 +522,21 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                         .map_or(true, |right| right.borrow().color == NodeColor::Black);
 
                     if left_black && right_black {
-                        // Case 2: Sibling and its children are black
                         sibling_node.borrow_mut().color = NodeColor::Red;
                         if parent.borrow().color == NodeColor::Black {
                             drop(node);
-                            node = parent.clone(); // Continue fixing the double-black up the tree
+                            node = parent.clone();
                         } else {
                             parent.borrow_mut().color = NodeColor::Black;
-                            break; // No further fixing needed
+                            break;
                         }
                     } else {
-                        // Case 3: At least one of sibling's children is red
                         if is_left && right_black {
-                            // Left child of sibling is red, and node is left child
                             sibling_node.borrow_mut().color = NodeColor::Red;
                             sibling_node.borrow_mut().left.as_ref().unwrap().borrow_mut().color =
                                 NodeColor::Black;
                             self.rotate_right(sibling_node.clone());
                         } else if !is_left && left_black {
-                            // Right child of sibling is red, and node is right child
                             sibling_node.borrow_mut().color = NodeColor::Red;
                             sibling_node.borrow_mut().right.as_ref().unwrap().borrow_mut().color =
                                 NodeColor::Black;
@@ -608,11 +566,10 @@ impl<T: Ord + std::fmt::Debug + std::fmt::Display + std::clone::Clone> RedBlackT
                             self.rotate_right(parent.clone());
                         }
 
-                        break; // Fixing is complete
+                        break;
                     }
                 }
             } else {
-                // Case 4: No sibling (shouldn't happen in a valid RB tree)
                 break;
             }
         }

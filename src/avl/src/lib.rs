@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::collections::hash_map::Keys;
 use std::rc::{Rc, Weak};
 use common::{DotNodeColor, Dotfile};
 
@@ -165,7 +164,6 @@ impl<T: Ord + Clone + std::fmt::Debug + std::fmt::Display> AVLTreeStructure<T> {
                 node.borrow_mut().right = Some(new_node);
             }
         }
-        // Balance the tree and update height
         AVLTreeNode::balance(&node)
     }
 
@@ -184,48 +182,34 @@ impl<T: Ord + Clone + std::fmt::Debug + std::fmt::Display> AVLTreeStructure<T> {
     }
 
     fn delete_node(node: AVLTreeStrong<T>, key: T) -> AVLTree<T> {
-        // Borrow the node mutably once
         let mut node_borrow = node.borrow_mut();
 
         if key < node_borrow.key {
-            // Look in the left subtree
             if node_borrow.left.is_some() {
                 let left = node_borrow.left.take().unwrap();
                 node_borrow.left = Self::delete_node(left, key);
             }
         } else if key > node_borrow.key {
-            // Look in the right subtree
             if node_borrow.right.is_some() {
                 let right = node_borrow.right.take().unwrap();
                 node_borrow.right = Self::delete_node(right, key);
             }
         } else {
-            // Node to be deleted found
             if node_borrow.left.is_none() && node_borrow.right.is_none() {
-                // Case 1: Node has no children
                 return None;
             } else if node_borrow.left.is_none() {
-                // Case 2: Node has only right child
                 return node_borrow.right.take();
             } else if node_borrow.right.is_none() {
-                // Case 3: Node has only left child
                 return node_borrow.left.take();
             } else {
-                // Case 4: Node has two children
-                // Find the in-order successor (the smallest node in the right subtree)
                 if let Some(successor) = Self::min_node(node_borrow.right.clone()) {
-                    // Replace current node with successor's key
                     node_borrow.key = successor.borrow().key.clone();
-                    // Delete the successor node from the right subtree
                     node_borrow.right = Self::delete_node(successor.clone(), successor.borrow().key.clone());
                 }
             }
         }
 
-        // Drop the mutable borrow here
         drop(node_borrow);
-
-        // After the borrow is dropped, we can balance the node
         Some(AVLTreeNode::balance(&node))
     }
 
